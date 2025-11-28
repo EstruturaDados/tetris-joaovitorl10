@@ -1,56 +1,145 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-// Desafio Tetris Stack
-// Tema 3 - Integração de Fila e Pilha
-// Este código inicial serve como base para o desenvolvimento do sistema de controle de peças.
-// Use as instruções de cada nível para desenvolver o desafio.
+#define TAM_FILA 5
+#define TAM_PILHA 3
+
+// Struct que representa uma peça do Tetris
+typedef struct {
+    char nome; // Tipo da peça: 'I', 'O', 'T', 'L'
+    int id;    // Identificador único
+} Peca;
+
+// Fila circular de peças futuras
+typedef struct {
+    Peca elementos[TAM_FILA];
+    int inicio, fim, total;
+} Fila;
+
+// Pilha linear de peças reservadas
+typedef struct {
+    Peca elementos[TAM_PILHA];
+    int topo;
+} Pilha;
+
+// Função para gerar uma nova peça aleatória
+Peca gerarPeca(int id) {
+    char tipos[] = {'I', 'O', 'T', 'L'};
+    int idx = rand() % 4;
+    Peca nova;
+    nova.nome = tipos[idx];
+    nova.id = id;
+    return nova;
+}
+
+// Inicializa a fila circular
+void inicializarFila(Fila *f, int *idGlobal) {
+    f->inicio = 0;
+    f->fim = 0;
+    f->total = 0;
+    for (int i = 0; i < TAM_FILA; i++) {
+        f->elementos[i] = gerarPeca((*idGlobal)++);
+        f->fim = (f->fim + 1) % TAM_FILA;
+        f->total++;
+    }
+}
+
+// Inicializa a pilha
+void inicializarPilha(Pilha *p) {
+    p->topo = -1;
+}
+
+// Remove a peça da frente da fila (dequeue)
+Peca jogarPeca(Fila *f, int *idGlobal) {
+    Peca removida = f->elementos[f->inicio];
+    f->elementos[f->inicio] = gerarPeca((*idGlobal)++); // Gera nova peça
+    f->inicio = (f->inicio + 1) % TAM_FILA;
+    // Não altera total, pois sempre mantém cheia
+    return removida;
+}
+
+// Move a peça da frente da fila para o topo da pilha (push)
+int reservarPeca(Fila *f, Pilha *p, int *idGlobal) {
+    if (p->topo == TAM_PILHA - 1) return 0; // Pilha cheia
+    p->topo++;
+    p->elementos[p->topo] = f->elementos[f->inicio];
+    f->elementos[f->inicio] = gerarPeca((*idGlobal)++); // Gera nova peça
+    f->inicio = (f->inicio + 1) % TAM_FILA;
+    return 1;
+}
+
+// Remove a peça do topo da pilha (pop)
+int usarReserva(Pilha *p) {
+    if (p->topo == -1) return 0; // Pilha vazia
+    p->topo--;
+    return 1;
+}
+
+// Exibe o estado atual da fila e da pilha
+void exibirEstado(Fila *f, Pilha *p) {
+    printf("\nEstado atual:\n");
+    printf("Fila de peças\t");
+    for (int i = 0; i < TAM_FILA; i++) {
+        int idx = (f->inicio + i) % TAM_FILA;
+        printf("[%c %d] ", f->elementos[idx].nome, f->elementos[idx].id);
+    }
+    printf("\nPilha de reserva \t(Topo -> Base): ");
+    for (int i = p->topo; i >= 0; i--) {
+        printf("[%c %d] ", p->elementos[i].nome, p->elementos[i].id);
+    }
+    printf("\n------------------------------------------\n");
+}
+
+// Exibe o menu de opções
+void exibirMenu() {
+    printf("\nOpções de Ação:\n");
+    printf("Código\tAção\n");
+    printf("1\tJogar peça\n");
+    printf("2\tReservar peça\n");
+    printf("3\tUsar peça reservada\n");
+    printf("0\tSair\n");
+    printf("Opção: ");
+}
 
 int main() {
+    srand((unsigned)time(NULL));
+    Fila fila;
+    Pilha pilha;
+    int idGlobal = 0;
+    int opcao;
 
-    // 🧩 Nível Novato: Fila de Peças Futuras
-    //
-    // - Crie uma struct Peca com os campos: tipo (char) e id (int).
-    // - Implemente uma fila circular com capacidade para 5 peças.
-    // - Crie funções como inicializarFila(), enqueue(), dequeue(), filaCheia(), filaVazia().
-    // - Cada peça deve ser gerada automaticamente com um tipo aleatório e id sequencial.
-    // - Exiba a fila após cada ação com uma função mostrarFila().
-    // - Use um menu com opções como:
-    //      1 - Jogar peça (remover da frente)
-    //      0 - Sair
-    // - A cada remoção, insira uma nova peça ao final da fila.
+    inicializarFila(&fila, &idGlobal);
+    inicializarPilha(&pilha);
 
-
-
-    // 🧠 Nível Aventureiro: Adição da Pilha de Reserva
-    //
-    // - Implemente uma pilha linear com capacidade para 3 peças.
-    // - Crie funções como inicializarPilha(), push(), pop(), pilhaCheia(), pilhaVazia().
-    // - Permita enviar uma peça da fila para a pilha (reserva).
-    // - Crie um menu com opção:
-    //      2 - Enviar peça da fila para a reserva (pilha)
-    //      3 - Usar peça da reserva (remover do topo da pilha)
-    // - Exiba a pilha junto com a fila após cada ação com mostrarPilha().
-    // - Mantenha a fila sempre com 5 peças (repondo com gerarPeca()).
-
-
-    // 🔄 Nível Mestre: Integração Estratégica entre Fila e Pilha
-    //
-    // - Implemente interações avançadas entre as estruturas:
-    //      4 - Trocar a peça da frente da fila com o topo da pilha
-    //      5 - Trocar os 3 primeiros da fila com as 3 peças da pilha
-    // - Para a opção 4:
-    //      Verifique se a fila não está vazia e a pilha tem ao menos 1 peça.
-    //      Troque os elementos diretamente nos arrays.
-    // - Para a opção 5:
-    //      Verifique se a pilha tem exatamente 3 peças e a fila ao menos 3.
-    //      Use a lógica de índice circular para acessar os primeiros da fila.
-    // - Sempre valide as condições antes da troca e informe mensagens claras ao usuário.
-    // - Use funções auxiliares, se quiser, para modularizar a lógica de troca.
-    // - O menu deve ficar assim:
-    //      4 - Trocar peça da frente com topo da pilha
-    //      5 - Trocar 3 primeiros da fila com os 3 da pilha
-
+    do {
+        exibirEstado(&fila, &pilha);
+        exibirMenu();
+        scanf("%d", &opcao);
+        switch (opcao) {
+            case 1:
+                jogarPeca(&fila, &idGlobal);
+                printf("Peça jogada!\n");
+                break;
+            case 2:
+                if (reservarPeca(&fila, &pilha, &idGlobal))
+                    printf("Peça reservada!\n");
+                else
+                    printf("Reserva cheia!\n");
+                break;
+            case 3:
+                if (usarReserva(&pilha))
+                    printf("Peça da reserva usada!\n");
+                else
+                    printf("Reserva vazia!\n");
+                break;
+            case 0:
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opção inválida!\n");
+        }
+    } while (opcao != 0);
 
     return 0;
 }
-
